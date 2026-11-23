@@ -3,7 +3,7 @@
 > **学习目标**：用扩散模型做世界模型；理解自回归漂移与 Diffusion Forcing；实现隐动作模型和精简版 Genie；了解 Dreamer 4 与视频基础模型
 > **预计时长**：3 周（第 18–20 周）
 > **前置**：Phase 6（Dreamer）、Phase 8（tokenizer、MaskGIT）；`deep-learning-course` 的 DDPM
-> **状态**：README ✅ ｜ CONCEPT.md ⏳ ｜ 讲义 0/10 ⏳ ｜ 项目 ⏳
+> **状态**：README ✅ ｜ CONCEPT.md ✅ ｜ 讲义 0/10 ⏳ ｜ 项目 ⏳
 
 ## 🧭 在课程中的位置
 

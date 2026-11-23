@@ -3,7 +3,7 @@
 > **学习目标**：把画面离散成 token，用 Transformer 做世界模型；实现 VQ-VAE、IRIS、STORM 的精简版
 > **预计时长**：2 周（第 16–17 周）
 > **前置**：Phase 6（Dreamer）；`deep-learning-course` 的 Transformer / GPT
-> **状态**：README ✅ ｜ CONCEPT.md ⏳ ｜ 讲义 0/8 ⏳ ｜ 项目 ⏳
+> **状态**：README ✅ ｜ CONCEPT.md ✅ ｜ 讲义 0/8 ⏳ ｜ 项目 ⏳
 
 ## 🧭 在课程中的位置
 

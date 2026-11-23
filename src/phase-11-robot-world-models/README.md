@@ -3,7 +3,7 @@
 > **学习目标**：了解世界模型在机器人上的四种用法——当策略、当仿真器、当数据引擎、在真机上在线学习；能读懂这个方向的最新论文
 > **预计时长**：2 周（第 23–24 周）
 > **前置**：Phase 6（Dreamer）、Phase 9（扩散与视频世界模型）、Phase 10（JEPA）
-> **状态**：README ✅ ｜ CONCEPT.md ⏳ ｜ 讲义 0/9 ⏳ ｜ 项目 ⏳
+> **状态**：README ✅ ｜ CONCEPT.md ✅ ｜ 讲义 0/9 ⏳ ｜ 项目 ⏳
 
 ## 🧭 在课程中的位置
 
@@ -100,6 +100,7 @@
 | Open X-Embodiment 2023 | arXiv:2310.08864 | ⭐⭐ | 跨本体数据集 |
 | Ross et al. 2011, DAgger | arXiv:1011.0686 | ⭐⭐ | 模仿学习的分布偏移问题 |
 | Bar et al. 2024, Navigation World Models | arXiv:2412.03572 | ⭐ | 导航方向 |
+| Li et al. 2024, SIMPLER | arXiv:2405.05941 | ⭐⭐⭐ | 用物理仿真器评估真机策略；MMRV 指标的出处 |
 | Hu et al. 2023, GAIA-1；Russell et al. 2025, GAIA-2 | arXiv:2309.17080 / 2503.20523 | ⭐ | 自动驾驶方向 |
 | Gao et al. 2024, Vista | arXiv:2405.17398 | ⭐ | 自动驾驶方向 |
 

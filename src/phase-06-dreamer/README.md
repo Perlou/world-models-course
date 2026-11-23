@@ -3,7 +3,7 @@
 > **学习目标**：理解并实现 Dreamer V1 → V3：在 RSSM 的隐空间里想象轨迹，用想象出的轨迹训练 actor 和 critic
 > **预计时长**：3 周（第 11–13 周）
 > **前置**：Phase 3（RSSM）、Phase 4（λ-return）、Phase 5（actor-critic、三种梯度估计器）
-> **状态**：README ✅ ｜ CONCEPT.md ⏳ ｜ 讲义 0/10 ⏳ ｜ 项目 ⏳
+> **状态**：README ✅ ｜ CONCEPT.md ✅ ｜ 讲义 0/10 ⏳ ｜ 项目 ⏳
 
 ## 🧭 在课程中的位置
 

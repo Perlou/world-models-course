@@ -3,7 +3,7 @@
 > **学习目标**：理解联合嵌入预测架构（JEPA）：不生成像素，在表征空间里预测；实现 I-JEPA 精简版和基于冻结特征的世界模型规划
 > **预计时长**：2 周（第 21–22 周）
 > **前置**：Phase 1（CEM）、Phase 7（不重建观测的思路）；`deep-learning-course` 的 ViT / Transformer
-> **状态**：README ✅ ｜ CONCEPT.md ⏳ ｜ 讲义 0/8 ⏳ ｜ 项目 ⏳
+> **状态**：README ✅ ｜ CONCEPT.md ✅ ｜ 讲义 0/8 ⏳ ｜ 项目 ⏳
 
 ## 🧭 在课程中的位置
 

@@ -3,7 +3,7 @@
 > **学习目标**：理解"只预测对决策有用的量"这一路线；实现 MCTS、MuZero 和 TD-MPC2
 > **预计时长**：2 周（第 14–15 周）
 > **前置**：Phase 1（MPPI）、Phase 4（价值函数、TD）、Phase 5（SAC）、Phase 6（Dreamer）
-> **状态**：README ✅ ｜ CONCEPT.md ⏳ ｜ 讲义 0/9 ⏳ ｜ 项目 ⏳
+> **状态**：README ✅ ｜ CONCEPT.md ✅ ｜ 讲义 0/9 ⏳ ｜ 项目 ⏳
 
 ## 🧭 在课程中的位置
 
