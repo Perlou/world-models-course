@@ -1,0 +1,29 @@
+[project]
+name = "world-models-course"
+version = "0.1.0"
+description = "世界模型课程：从动力学模型到具身智能世界模型"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    # 深度学习
+    "torch>=2.7",
+    "numpy>=2.0",
+    # 环境：经典控制 + MuJoCo
+    "gymnasium[classic-control,mujoco]>=1.2,<2",
+    # MuJoCo 4.0（2026-11）改了包结构，机器人生态仍在 3.x，先锁 3.x
+    "mujoco>=3.3,<4",
+    # 可视化与视频
+    "matplotlib>=3.9",
+    "imageio[ffmpeg]>=2.34",
+    "tqdm>=4.66",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+# 本仓库是课程代码，不是可安装的包
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["projects"]

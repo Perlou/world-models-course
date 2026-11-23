@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# 环境变量
+.env
+.env.local
+
+# IDE / 系统
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# 课程运行产物（图、视频、数据集、检查点）
+outputs/
+data/
+runs/
+wandb/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 日志与缓存
+logs/
+*.log
+.cache/
+
+# 个人练习目录（自己照着讲义敲的代码放这里，不入库）
+ex/
