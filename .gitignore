@@ -43,3 +43,6 @@ logs/
 
 # 个人练习目录（自己照着讲义敲的代码放这里，不入库）
 ex/
+
+# Claude Code 的本机个人配置
+.claude/settings.local.json

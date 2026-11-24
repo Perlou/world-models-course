@@ -211,9 +211,10 @@ $r_t$ 是在第 $t$ 步执行 $a_t$ 得到的奖励。
 
 - PushT 的数据是离线的演示，没有奖励信号可供在线强化学习。所以本章项目对世界模型的用法是"预测 + 规划"，
   不是 IRIS 论文里的"在想象中训练 actor-critic"。后者在讲义 `05-iris.py` 里用一个小的像素环境演示。
-- `gym-pusht` 依赖 `pygame`，和 Gymnasium 的 classic-control / box2d 扩展依赖的 `pygame-ce` 不能装在同一个环境里。
-  PushT 项目要用独立的环境。讲义只读取离线的演示数据（图像和动作），按规划不需要安装 `gym-pusht`；
-  只有项目里做闭环规划时才需要环境本身。
+- `gym-pusht` 声明依赖 `pygame`，Gymnasium 的 classic-control / box2d 扩展依赖 `pygame-ce`，两个包会装进同一个目录互相覆盖。
+  本课的处理：`pyproject.toml` 里用 uv 的 `override-dependencies` 把 `pygame` 排除，`gym-pusht` 直接用 API 兼容的 `pygame-ce`，
+  实测 PushT 和 `CarRacing-v3` 可以在同一个环境里运行。演示数据用 `utils.pusht.load_pusht_demos()` 读取，
+  需要闭环交互时用 `utils.pusht.make_pusht_env()`。
 
 ---
 
@@ -2490,7 +2491,7 @@ STORM 把 $K + 1$ 降到 1，注意力的开销按平方下降，$(340 / 20)^2 =
 | STORM 的 KL 一直很大，先验学不会 | 时间错位：拿 $h_t$ 的预测去对齐 $z_t$ 而不是 $z_{t+1}$ | 检查切片 | 先验取 `[:, :-1]`，后验取 `[:, 1:]` |
 | MaskGIT 解码出的画面像 $S = 1$ 时一样混乱 | 训练时掩码比例是固定的；或解码时已揭开的 token 又被掩掉了 | 打印每一轮剩余的被掩个数，应该单调下降到 0 | 训练时按调度随机抽比例；已揭开位置的置信度设为无穷大 |
 | 策略在想象里回报很高，放到真实环境里很差 | 模型被钻空子（Phase 1 第 8.5 节）；或策略在两边看到的画面分布不同 | 对比同一批起点的想象回报和真实回报 | 真实交互时也给策略看重建画面；缩短想象步数；多采真实数据 |
-| 装了 `gym-pusht` 之后 Gymnasium 的 classic-control 或 box2d 环境报错，或者反过来 | `pygame` 与 `pygame-ce` 不能共存 | 看环境里是不是两个包都装了 | PushT 项目用独立的环境，不和主环境混装 |
+| 装了 `gym-pusht` 之后 Gymnasium 的 classic-control 或 box2d 环境报错，或者反过来 | `pygame` 与 `pygame-ce` 装进同一个目录互相覆盖（通常是绕过 uv 用 pip 装了 `gym-pusht`） | `uv pip list` 里是不是两个包都在 | 只用 `uv sync` 安装；`pyproject.toml` 的 `override-dependencies` 已把 `pygame` 排除，`gym-pusht` 用 `pygame-ce` |
 
 调试顺序的建议和 Phase 1 一样，从下游往上游一层层确认：
 先单独验证 tokenizer（重建、利用率、误差热力图），再验证世界模型的 teacher forcing 损失，

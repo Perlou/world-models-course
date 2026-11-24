@@ -8,8 +8,13 @@ dependencies = [
     # 深度学习
     "torch>=2.7",
     "numpy>=2.0",
-    # 环境：经典控制 + MuJoCo
-    "gymnasium[classic-control,mujoco]>=1.2,<2",
+    # 环境：经典控制 + MuJoCo + Box2D（P2 的 CarRacing-v3）
+    "gymnasium[classic-control,mujoco,box2d]>=1.2,<2",
+    # PushT 推块任务（P8–P11 的贯穿任务）。它声明依赖 pygame，见下面 [tool.uv] 的说明
+    "gym-pusht>=0.1.8",
+    "opencv-python-headless>=4.9",
+    # 读取 LeRobot 格式的 PushT 演示数据（parquet + mp4），不安装 lerobot 本体
+    "pyarrow>=18",
     # MuJoCo 4.0（2026-11）改了包结构，机器人生态仍在 3.x，先锁 3.x
     "mujoco>=3.3,<4",
     # 可视化与视频
@@ -24,6 +29,14 @@ dev = ["pytest>=8"]
 [tool.uv]
 # 本仓库是课程代码，不是可安装的包
 package = false
+# gym-pusht 声明依赖 pygame 和 opencv-python，这里把两者都排除：
+# - pygame 与 Gymnasium 用的 pygame-ce 会装进同一个目录互相覆盖。pygame-ce 的 API 兼容，
+#   排除 pygame 后 gym-pusht 直接用 pygame-ce，实测 CarRacing-v3 与 PushT 可在同一环境运行。
+# - opencv-python 自带一份 SDL2，会和 pygame-ce 的 SDL2 重复加载并报警告，换成 headless 版。
+override-dependencies = [
+    "pygame ; sys_platform == 'never'",
+    "opencv-python ; sys_platform == 'never'",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["projects"]

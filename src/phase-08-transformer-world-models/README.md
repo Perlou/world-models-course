@@ -84,7 +84,9 @@ tokenizer + Transformer 世界模型，评估开环预测质量随步数的变�
 ## 💻 算力与环境
 
 - 环境：PushT（`gym-pusht`，数据来自 LeRobot 的 `lerobot/pusht`）。
-  `gym-pusht` 依赖 `pygame`，与 Gymnasium 经典控制依赖的 `pygame-ce` 冲突，本章起的 PushT 项目用独立环境。
+  `gym-pusht` 声明依赖 `pygame`，与 Gymnasium 经典控制依赖的 `pygame-ce` 冲突；`pyproject.toml` 里已用 uv 的
+  `override-dependencies` 排除 `pygame`，让 `gym-pusht` 直接用 `pygame-ce`，实测两者可以在主环境里共存。
+  演示数据用 `utils.pusht.load_pusht_demos()` 读取（206 个回合、25650 帧、96×96），不需要安装 `lerobot`。
 - 本机跑缩小版；完整规模的训练建议用 4090。
 
 ## ✅ 学习检查

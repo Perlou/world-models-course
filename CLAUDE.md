@@ -26,7 +26,7 @@ world-models-course/
 ├── pyproject.toml / uv.lock / .python-version     # Python 3.12，uv 管理
 ├── scripts/check_course.py                        # 文档检查 + 讲义冒烟运行
 ├── src/
-│   ├── utils/                                     # 只放基础设施：设备、种子、画图、存视频
+│   ├── utils/                                     # 基础设施（设备、种子、画图、存视频、PushT 数据）+ 已被跨章复用的组件
 │   └── phase-NN-<slug>/
 │       ├── README.md                              # 章节大纲与进度
 │       ├── CONCEPT.md                             # 本章核心概念精讲（重点）
@@ -214,7 +214,12 @@ uv run pytest                                      # 项目测试
 - **MuJoCo 锁在 3.x**（`mujoco>=3.3,<4`）。4.0 在 2026-11 发布，包结构变了，机器人生态（Meta-World、ALOHA 仿真、LIBERO）还依赖 3.x。
 - **设备**：`utils.get_device()` 按 cuda → mps → cpu 选择。本机是 M1 Max 32GB，没有 NVIDIA GPU；MPS 不支持 float64，张量一律用 float32。重训练在 AutoDL 的 4090 上跑。
 - **依赖按阶段添加**：`pyproject.toml` 里只放已经写了讲义的阶段要用的包。
-- **已知冲突**：`gym-pusht` 依赖 `pygame`，Gymnasium 的 classic-control / box2d 扩展依赖 `pygame-ce`，两者不能装在同一个环境。P8 起的 PushT 项目要用独立环境。
+- **pygame 冲突的处理**：`gym-pusht` 声明依赖 `pygame`，Gymnasium 的 classic-control / box2d 扩展依赖 `pygame-ce`，两个包会装进同一个目录互相覆盖。
+  `pyproject.toml` 里用 `[tool.uv] override-dependencies` 把 `pygame`（和自带 SDL2 的 `opencv-python`）排除，`gym-pusht` 直接用 `pygame-ce`。
+  实测 `CarRacing-v3` 与 PushT 可以在主环境里共存，不需要独立环境。不要用 `pip install gym-pusht` 绕过 uv。
+- **PushT 数据**：`from utils.pusht import load_pusht_demos, make_pusht_env`。演示数据（`lerobot/pusht`，206 个回合、25650 帧、96×96）
+  第一次使用时下载并缓存到 `data/pusht/`；不安装 `lerobot` 本体。
+- **共享规划器**：`from utils.planning import cem_plan, mppi_plan, shift_plan`（P1 讲义 06 的规划器，接口改成接收打分函数），P3 起复用。
 - 已核对的环境名：`Pendulum-v1`、`Reacher-v5`、`CarRacing-v3`、`HalfCheetah-v5`、`Hopper-v5`。
 
 ## 不要做的事
