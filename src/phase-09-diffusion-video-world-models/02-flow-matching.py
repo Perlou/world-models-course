@@ -21,6 +21,7 @@ Phase 9 · 第 02 课：Flow Matching 与 Rectified Flow
 import importlib.util
 import math
 import os
+import sys
 import time
 
 import numpy as np
@@ -28,6 +29,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import is_quick, output_dir, save_figure, seed_everything, setup_matplotlib
 
 _DIR = os.path.dirname(os.path.abspath(__file__))

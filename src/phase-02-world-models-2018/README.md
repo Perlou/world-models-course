@@ -3,7 +3,7 @@
 > **学习目标**：复现 Ha & Schmidhuber 的 World Models：从像素学隐空间，在隐空间里预测未来，在"梦"里训练控制器
 > **预计时长**：2 周（第 3–4 周）
 > **前置**：Phase 1；`deep-learning-course` 的 VAE（ELBO、重参数化）和 LSTM
-> **状态**：README ✅ ｜ CONCEPT.md ✅ ｜ 讲义 4/8 ⏳ ｜ 项目 ⏳
+> **状态**：README ✅ ｜ CONCEPT.md ✅ ｜ 讲义 8/8 ✅ ｜ 项目 ✅
 
 ## 🧭 在课程中的位置
 

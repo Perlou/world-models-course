@@ -22,6 +22,7 @@ Phase 9 · 第 03 课：以动作为条件的下一帧扩散世界模型
 import importlib.util
 import math
 import os
+import sys
 import time
 
 import cv2
@@ -30,6 +31,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import is_quick, output_dir, save_figure, seed_everything, setup_matplotlib
 from utils.pusht import load_pusht_demos
 

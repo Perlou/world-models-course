@@ -21,6 +21,8 @@ Phase 9 · 第 01 课：从 DDPM 到 EDM —— σ 参数化、预条件与少�
 """
 
 import math
+import os
+import sys
 import time
 
 import cv2
@@ -29,6 +31,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import is_quick, output_dir, save_figure, seed_everything, setup_matplotlib
 from utils.pusht import load_pusht_demos
 
