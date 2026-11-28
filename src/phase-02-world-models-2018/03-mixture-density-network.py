@@ -6,7 +6,7 @@
     1. 用一个能手算的例子看清：均方误差的最优解是条件均值，多峰时它落在两个峰中间
     2. 手写 MDN 的负对数似然（log-softmax + 高斯对数密度 + log-sum-exp），和手算结果逐位核对
     3. 用自动求导验证三组梯度都由"责任度"决定
-    4. 在一个"一个 x 对应多个 y"的玩具问题上，对比 MSE 回归、单高斯、MDN
+    4. 在一个"一个 x 对应两个 y"的岔路口玩具问题上，对比 MSE 回归、单高斯、MDN
     5. 知道 MDN 的输出该怎么用：采样，而不是取加权平均
 
 核心概念：
@@ -199,22 +199,24 @@ log σ_2 的梯度是 0：误差 0.5 正好等于 σ_2，不用调。两个 logi
 
 
 def forward_curve(y):
-    """单值的正向函数 x = g(y)。把输入输出对调，就得到一个 x 对应多个 y 的反问题。"""
-    return y + 0.3 * np.sin(2 * np.pi * y)
+    """单值的正向函数 x = g(y) = 4 (y - 0.5)²。把输入输出对调，就得到一个 x 对应两个 y 的反问题。"""
+    return 4.0 * (y - 0.5) ** 2
 
 
 def make_inverse_dataset(n, rng):
-    """Bishop 1994 的经典玩具问题。返回 x、y，形状 [n, 1]，float32。"""
+    """岔路口数据。做法来自 Bishop 1994：取一个单值函数，把输入输出对调。返回 x、y，形状 [n, 1]，float32。
+
+    x 是"过了岔路口多远"，y 是横向位置。x = 0 时只有一条路（y = 0.5），x 越大两条路分得越开。
+    """
     y = rng.uniform(0, 1, size=n)
     x = forward_curve(y) + NOISE_STD * rng.normal(size=n)
     return (torch.from_numpy(x).float().unsqueeze(1), torch.from_numpy(y).float().unsqueeze(1))
 
 
-def count_branches(x, grid=2001):
-    """在给定的 x 上，y = g⁻¹(x) 有几个解（数 g(y) - x 变号的次数）。"""
-    ys = np.linspace(0, 1, grid)
-    diff = forward_curve(ys) - x
-    return int((np.sign(diff[:-1]) != np.sign(diff[1:])).sum())
+def inverse_solutions(x):
+    """给定 x，解出 g(y) = x 的全部 y：0.5 ± 0.5 √x（下面那条路、上面那条路）。"""
+    half = 0.5 * math.sqrt(x)
+    return [0.5 - half, 0.5 + half]
 
 
 class PointRegressor(nn.Module):
@@ -276,17 +278,19 @@ def on_branch_rate(x, y_pred):
 
 def toy_experiment(steps):
     print("=" * 60)
-    print("第三部分：一个 x 对应多个 y 的玩具问题")
+    print("第三部分：岔路口——一个 x 对应两个 y 的玩具问题")
     print("=" * 60)
 
     rng = np.random.default_rng(SEED)
     x_train, y_train = make_inverse_dataset(2000, rng)
     x_test, y_test = make_inverse_dataset(2000, rng)
-    branches = {x: count_branches(x) for x in (0.1, 0.5, 0.9)}
+    fork = lambda x: " 和 ".join(f"{y:.2f}" for y in inverse_solutions(x))
     print(f"""
-数据：正向函数 x = y + 0.3 sin(2πy) 是单值的；把它反过来，从 x 预测 y。
-中间一段的 x 对应 3 个 y：x = 0.1 有 {branches[0.1]} 个解，x = 0.5 有 {branches[0.5]} 个解，x = 0.9 有 {branches[0.9]} 个解。
-训练集、测试集各 {len(x_train)} 个点。三个模型的网络主体相同（两层 64 单元），只有输出层和损失不同。
+数据：正向函数 x = 4 (y - 0.5)² 是单值的；把它反过来，从 x 预测 y，每个 x 有两个解 y = 0.5 ± 0.5 √x。
+把 x 看成"过了岔路口多远"，y 看成横向位置：两条路从 y = 0.5 分开，越走越远。
+    x = 0.04：y = {fork(0.04)}        x = 0.36：y = {fork(0.36)}        x = 0.81：y = {fork(0.81)}
+训练集、测试集各 {len(x_train)} 个点（x 上加了标准差 {NOISE_STD} 的噪声）。
+三个模型的网络主体相同（两层 64 单元），只有输出层和损失不同。
     """)
 
     start = time.time()
@@ -320,15 +324,19 @@ def toy_experiment(steps):
     MDN（K = 5）                      {nll_mdn:+8.3f}              {rate_mdn * 100:5.1f}%   （采样）
     参照：测试数据本身                                           {rate_data * 100:5.1f}%
     """)
+    with torch.no_grad():
+        mse_spread = (regressor(x_test) - 0.5).abs().max().item()
     if nll_mdn < nll_gauss < nll_mse and rate_mdn > max(rate_mse, rate_gauss) + 0.2:
         print(f"""三级台阶：MSE → 单高斯 → MDN，负对数似然一级比一级低。
-MSE 的预测曲线在多值区域穿过几条分支的中间，只有 {rate_mse * 100:.0f}% 的预测落在真实曲线上；
-单高斯学会了"这一段我不确定"（σ 变大），但只有一个峰，采样仍然大多落在分支之间；
+MSE 的预测几乎是一条 y = 0.5 的水平线（离 0.5 最远只有 {mse_spread:.3f}）：正好走在两条路中间。
+    只有 {rate_mse * 100:.0f}% 的预测落在真实曲线上，全在岔路口附近、两条路还没分开的那一小段。
+单高斯学会了"越往前越不确定"（σ 随 x 变大），负对数似然比 MSE 低；但它只有一个峰，
+    峰顶仍然在两条路中间，采样只有 {rate_gauss * 100:.0f}% 落在曲线上。
 MDN 的采样有 {rate_mdn * 100:.0f}% 落在曲线上，接近数据本身的 {rate_data * 100:.0f}%。
 MDN 的负对数似然是负数：概率密度可以大于 1，分布越窄、预测越准，损失越负。
         """)
     else:
-        print("这次运行里三个模型的差距没有预期的明显（冒烟模式训练步数太少时会这样）。\n")
+        print("这次运行里三个模型没有排成预期的三级台阶（训练步数太少时会这样，比如冒烟模式）。\n")
 
     plot_fits(x_train, y_train, x_test, regressor, sample_gauss, sample_mdn)
     return mdn, regressor, (x_train, y_train, x_test, y_test)
@@ -341,15 +349,15 @@ def plot_fits(x_train, y_train, x_test, regressor, sample_gauss, sample_mdn):
     fig, axes = plt.subplots(1, 3, figsize=(14, 4.2), sharey=True)
     for ax in axes:
         ax.scatter(x_train[:800], y_train[:800], s=5, color="lightgray", label="训练数据")
-        ax.set_xlabel("x")
+        ax.set_xlabel("x（过了岔路口多远）")
         ax.set_ylim(-0.25, 1.25)
     axes[0].plot(xs, curve, color="tab:red", lw=2, label="MSE 回归的预测")
-    axes[0].set_title("MSE 回归：穿过分支的中间")
+    axes[0].set_title("MSE 回归：走在两条路中间")
     axes[1].scatter(x_test[:800], sample_gauss[:800], s=5, color="tab:orange", label="单高斯的采样")
     axes[1].set_title("单高斯（K = 1）：知道不确定，但只有一个峰")
     axes[2].scatter(x_test[:800], sample_mdn[:800], s=5, color="tab:blue", label="MDN 的采样")
-    axes[2].set_title("MDN（K = 5）：采样落在各条分支上")
-    axes[0].set_ylabel("y")
+    axes[2].set_title("MDN（K = 5）：采样落在两条路上")
+    axes[0].set_ylabel("y（横向位置）")
     for ax in axes:
         ax.legend(loc="upper left", fontsize=8)
     save_figure(fig, OUT / "03-mse-vs-mdn.png")
@@ -366,11 +374,9 @@ def anatomy(mdn, regressor, data):
     x_train, y_train, x_test, _ = data
     k_total = mdn.n_components
 
-    # 在 x = 0.5 这一刀上看：三条分支各取一个点，谁负责
-    x0 = 0.5
-    ys = np.linspace(0, 1, 2001)
-    diff = forward_curve(ys) - x0
-    roots = ys[:-1][np.sign(diff[:-1]) != np.sign(diff[1:])]
+    # 在 x = 0.64 这一刀上看：两条路各取一个点，谁负责
+    x0 = 0.64
+    roots = inverse_solutions(x0)
     log_pi, mu, log_sigma = mdn(torch.tensor([[x0]]))
     pi, sigma = log_pi.exp()[0], log_sigma.clamp(LOG_SIGMA_MIN, LOG_SIGMA_MAX).exp()[0]
     print(f"\n在 x = {x0} 这一刀上，MDN 的 {k_total} 个成分：")
@@ -396,20 +402,22 @@ def anatomy(mdn, regressor, data):
     torch.manual_seed(SEED)
     sampled = mdn_sample(log_pi_t, mu_t, log_sigma_t).unsqueeze(-1)
     gap = (weighted_mean - regressor(x_test)).abs().mean().item()
-    # 多值区域里，各条分支被"取到"的情况：按 y 分成下、中、上三段
-    multi = ((x_test > 0.35) & (x_test < 0.65)).squeeze(-1)
-    share = lambda y: [float(((y[multi] >= lo) & (y[multi] < hi)).float().mean()) for lo, hi in ((-9, 0.3), (0.3, 0.7), (0.7, 9))]
-    share_top, share_sample = share(top_component), share(sampled)
+    # 两条路已经明显分开的区域（x > 0.2）里，上下两条路各被"取到"多少
+    forked = (x_test > 0.2).squeeze(-1)
+    share = lambda y: [float((y[forked] < 0.5).float().mean()), float((y[forked] >= 0.5).float().mean())]
+    share_top, share_sample, share_data = share(top_component), share(sampled), share(data[3])
     print(f"""MDN 的输出有三种用法，在测试集上比较：
 
-    用法                         落在真实曲线上的比例    多值区域里取到 下 / 中 / 上 三条分支的比例
+    用法                         落在真实曲线上的比例    x > 0.2 的区域里取到 下 / 上 两条路的比例
     按 π 加权平均各成分的 μ          {on_branch_rate(x_test, weighted_mean) * 100:5.1f}%
-    只取 π 最大的成分的 μ            {on_branch_rate(x_test, top_component) * 100:5.1f}%            {share_top[0] * 100:3.0f}% / {share_top[1] * 100:3.0f}% / {share_top[2] * 100:3.0f}%
-    采样                           {on_branch_rate(x_test, sampled) * 100:5.1f}%            {share_sample[0] * 100:3.0f}% / {share_sample[1] * 100:3.0f}% / {share_sample[2] * 100:3.0f}%
+    只取 π 最大的成分的 μ            {on_branch_rate(x_test, top_component) * 100:5.1f}%            {share_top[0] * 100:3.0f}% / {share_top[1] * 100:3.0f}%
+    采样                           {on_branch_rate(x_test, sampled) * 100:5.1f}%            {share_sample[0] * 100:3.0f}% / {share_sample[1] * 100:3.0f}%
+    参照：测试数据本身                                     {share_data[0] * 100:3.0f}% / {share_data[1] * 100:3.0f}%
 
 加权平均和 MSE 回归的预测平均只差 {gap:.3f}：它就是又算了一次条件均值，白费了混合。
-只取权重最大的成分，每个点都落在曲线上，但多值区域里它几乎总是挑同一条分支，其他可能被丢掉了。
-采样才是 MDN 的正确用法：先抽"是哪种情况"，再在这种情况里采一个值。
+只取权重最大的成分，每个点都落在曲线上，但每个 x 只留下一种可能，另一条路被丢掉了；
+    两条路的权重本来接近，选中哪一条取决于很小的数值差别（上面的比例说明不了哪条路更可能）。
+采样才是 MDN 的正确用法：先抽"是哪种情况"，再在这种情况里采一个值，两条路的比例和数据一致。
     """)
 
     xs = torch.linspace(0, 1, 300).unsqueeze(1)
@@ -462,13 +470,15 @@ def component_sweep(data, steps):
         results[k] = (nll, used)
         print(f"   {k:>2}        {nll:+8.3f}                {used}")
     print()
-    if results[3][0] < results[2][0] < results[1][0] and abs(results[10][0] - results[3][0]) < 0.25 * abs(results[3][0] - results[1][0]):
-        print(f"""这个问题最多有 3 条分支。K 从 1 加到 3，负对数似然从 {results[1][0]:+.2f} 降到 {results[3][0]:+.2f}；
-再加到 5、10，变化就小了（{results[5][0]:+.2f}、{results[10][0]:+.2f}）。
+    drop = results[1][0] - results[2][0]
+    later = max(abs(results[k][0] - results[2][0]) for k in (3, 5, 10))
+    if drop > 0 and later < 0.25 * drop:
+        print(f"""这个问题有 2 条分支。K 从 1 加到 2，负对数似然从 {results[1][0]:+.2f} 降到 {results[2][0]:+.2f}；
+再加到 3、5、10（{results[3][0]:+.2f}、{results[5][0]:+.2f}、{results[10][0]:+.2f}），变化不到这一步的四分之一。
 K 取少了才有问题；取多了，多出来的成分要么权重趋近 0，要么几个成分合起来拟合同一条分支。
         """)
     else:
-        print("这次运行里 K 的趋势不典型（冒烟模式训练步数太少时会这样），完整运行时再看。\n")
+        print("这次运行里 K 的趋势不典型（训练步数太少时会这样，比如冒烟模式），完整运行时再看。\n")
 
 
 # ==================== 第六部分：练习 ====================
@@ -488,6 +498,10 @@ def exercises():
 练习 3：把 MixtureDensityNetwork 里"μ 的初始偏置铺开"那两行删掉，重新运行第五部分。
         用到的成分数怎么变？对应 CONCEPT.md 第 3.8 节的哪一种失败模式？
 
+练习 4：把 forward_curve 换成 Bishop 1994 原文的 y + 0.3 * np.sin(2 * np.pi * y)（inverse_solutions 也要跟着改，
+        可以用数值方法求根）。这条 S 形曲线中间一段有 3 条分支。重新运行，看 MSE 回归的预测曲线：
+        它在多值区域的中段看起来"贴着数据"。为什么？这说明 MSE 在这个问题上没问题吗？
+
 思考题 1：单高斯（K = 1）的负对数似然比"MSE 配常数 σ"低，它比 MSE 多知道了什么？
           它仍然不知道什么？
 
@@ -502,8 +516,13 @@ def exercises():
             这种"损失突然变成很大的负数"就是方差塌缩。-5 时停在 -3 左右。
     练习 3：所有成分初始时 μ 几乎相同，责任度平分，大家收到几乎一样的梯度，很难分开。
             常见的结果是用到的成分变少、负对数似然变差，即"退化成单峰"或"成分闲置"。
-    思考题 1：它多知道了"哪一段 x 上 y 的散布大"（σ 随 x 变化），所以在单值区域可以把 σ 收窄。
-              它仍然不知道散布的形状：多值区域里它只能用一个很宽的峰盖住三条分支。
+    练习 4：S 形曲线的三条分支上下对称，三者的平均值恰好落在中间那条分支上，所以 MSE 的预测看起来贴着数据。
+            这是对称性造成的巧合：上下两条分支它永远预测不到，而且在多值区域的两端，
+            预测要从一条分支跳到另一条，中间穿过没有数据的空白。本节用两条分支的岔路口，就是为了避开这个巧合。
+            另一个现象：S 形曲线上单高斯的测试负对数似然可能比 MSE 还差。多值区域边缘它的 σ 很小，
+            偶尔有一个测试点落在另一条分支上，(误差 / σ)² 可以到几百——"自信地错"在负对数似然下代价极高。
+    思考题 1：它多知道了"哪一段 x 上 y 的散布大"（σ 随 x 变化），所以在岔路口附近可以把 σ 收窄。
+              它仍然不知道散布的形状：分开之后它只能用一个很宽的峰盖住两条路，峰顶在两条路中间。
     思考题 2：不能。MDN 的 σ 和 π 表达的是偶然不确定性（数据本身的多值和噪声）。
               在训练数据范围之外，π、μ、σ 都是外推出来的，可大可小。认知不确定性要靠集成（Phase 1 第 8 节）。
     """)

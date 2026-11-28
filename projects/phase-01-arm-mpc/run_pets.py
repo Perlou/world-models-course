@@ -13,9 +13,9 @@
 用法（在仓库根目录）：
     uv run python projects/phase-01-arm-mpc/run_pets.py              # 完整运行，约 4 分钟（M1 Max，MPS）
     WM_QUICK=1 uv run python projects/phase-01-arm-mpc/run_pets.py   # 冒烟运行，约 20 秒
-    uv run python projects/phase-01-arm-mpc/run_pets.py --init-episodes 1 --tag -init1   # 对比实验：初始数据只给 1 个回合
+    uv run python projects/phase-01-arm-mpc/run_pets.py --init-episodes 1 --collect-episodes 1 --tag init1   # 对比实验：初始只给 1 个随机回合
 
-产物（outputs/phase-01-project/，文件名后面会接上 --tag）：
+产物（outputs/phase-01-project/；给了 --tag init1 时文件名变成 learning-curve-init1.png 等）：
     learning-curve.png        学习曲线
     open-loop-error.png       模型的开环误差
     real-vs-imagined.mp4      真实轨迹与模型想象轨迹的对比视频
@@ -165,7 +165,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Reacher-v5 上的 PETS")
     parser.add_argument("--init-episodes", type=int, default=None, help="初始的随机回合数（默认 5，冒烟模式 2）")
     parser.add_argument("--collect-episodes", type=int, default=None, help="每一轮用控制器新采的回合数（默认 2，冒烟模式 1）")
-    parser.add_argument("--tag", default="", help="接在产物文件名后面，做对比实验时用，避免覆盖默认结果")
+    parser.add_argument("--tag", default="", help="产物文件名的后缀，做对比实验时用，避免覆盖默认结果")
     return parser.parse_args()
 
 
@@ -178,7 +178,7 @@ def main():
         n_init, n_iterations, n_collect, eval_seeds, train_steps = 5, 8, 2, list(range(1000, 1005)), 2000
     n_init = args.init_episodes or n_init
     n_collect = args.collect_episodes or n_collect
-    tag = args.tag
+    tag = f"-{args.tag}" if args.tag else ""
 
     print("=" * 60)
     print("机械臂模型预测控制：Reacher-v5 上的 PETS")
