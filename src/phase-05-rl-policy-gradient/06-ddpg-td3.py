@@ -109,8 +109,11 @@ class ContinuousReplay:
         self.ptr = (self.ptr + 1) % self.capacity
         self.size = min(self.size + 1, self.capacity)
 
-    def sample(self, batch_size, rng):
-        idx = rng.integers(0, self.size, size=batch_size)
+    def __len__(self):
+        return self.size
+
+    def sample(self, batch_size, rng=None):
+        idx = np.random.randint(0, self.size, size=batch_size) if rng is None else rng.integers(0, self.size, size=batch_size)
         return (
             torch.from_numpy(self.obs[idx]),
             torch.from_numpy(self.act[idx]),
