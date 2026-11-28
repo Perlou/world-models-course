@@ -290,7 +290,7 @@ def mbpo_train(total_steps, rollout_k=1, model_ratio=0.9, utd=10, rollouts_per_f
                 agent.sac_update(batch)
 
         if step % eval_every == 0 or step == total_steps:
-            ev_r = evaluate_sac(agent, "Pendulum-v1", act_scale, n_episodes=5, seed_base=900)
+            ev_r = evaluate_sac("Pendulum-v1", agent, [900, 901, 902, 903, 904], act_scale)
             eval_steps.append(step)
             eval_rets.append(ev_r)
 
